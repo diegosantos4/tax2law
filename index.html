@@ -434,9 +434,11 @@ footer p{margin:4px 0}
       <h2 style="font-size:clamp(26px,3vw,34px);margin:10px 0 12px">상담문의</h2>
       <p style="color:var(--muted);margin:0 0 32px">언제든 연락주시면 친절히 상담해 드리겠습니다.</p>
       <div class="contact-grid">
-        <form id="consult" name="consult" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/thanks.html">
-          <input type="hidden" name="form-name" value="consult">
-          <p class="hp"><label>비워두세요 <input id="f-bot" name="bot-field"></label></p>
+        <form id="consult" name="consult" method="POST" action="https://api.web3forms.com/submit">
+          <input type="hidden" name="access_key" value="5a9a650e-cfc2-401f-81d6-192b35e70b15">
+          <input type="hidden" name="subject" value="[홈페이지] 새 상담 신청이 접수되었습니다">
+          <input type="hidden" name="from_name" value="tax2law.com 상담 신청">
+          <p class="hp"><label>비워두세요 <input id="f-bot" type="checkbox" name="botcheck" tabindex="-1" autocomplete="off"></label></p>
           <div class="row2">
             <label for="f-name">이름<input id="f-name" name="name" required autocomplete="name"></label>
             <label for="f-phone">연락처<input id="f-phone" name="phone" type="tel" required autocomplete="tel" placeholder="010-0000-0000"></label>
@@ -503,10 +505,22 @@ footer p{margin:4px 0}
   var live=/(^|\.)tax2law\.com$|netlify\.app$/.test(location.hostname);
   var form=document.getElementById('consult'),note=document.getElementById('form-note');
   form.addEventListener('submit',function(e){
-    if(live)return;
     e.preventDefault();
-    note.textContent='미리보기 화면이라 실제로 전송되지 않았습니다. 사이트를 Netlify에 올리면 이 양식으로 상담 신청이 접수됩니다.';
-    note.hidden=false;
+    if(!live){
+      note.textContent='미리보기 화면이라 실제로 전송되지 않았습니다. 실제 사이트에서는 이 양식으로 상담 신청이 접수됩니다.';
+      note.hidden=false;return;
+    }
+    var btn=form.querySelector('button[type=submit]');btn.disabled=true;btn.textContent='보내는 중…';
+    fetch(form.action,{method:'POST',headers:{'Accept':'application/json'},body:new FormData(form)})
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok&&j.success!==false}})})
+      .then(function(res){
+        if(!res.ok)throw new Error('fail');
+        location.href='/thanks.html';
+      })
+      .catch(function(){
+        note.textContent='전송에 실패했습니다. 잠시 후 다시 시도하시거나 02-555-1303으로 전화 주세요.';
+        note.hidden=false;btn.disabled=false;btn.textContent='상담 신청 보내기';
+      });
   });
 })();
 </script>
